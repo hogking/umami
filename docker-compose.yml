@@ -12,6 +12,7 @@ services:
       DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DB}
       DATABASE_TYPE: mysql
       APP_SECRET: ${APP_SECRET}
+      SKIP_DB_MIGRATION: "true"  # 升级时不需要执行迁移
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "curl http://localhost:3000/api/heartbeat"]
