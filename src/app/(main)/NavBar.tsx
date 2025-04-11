@@ -1,17 +1,17 @@
 'use client';
+import { useEffect } from 'react';
 import { Icon, Text } from 'react-basics';
 import Link from 'next/link';
 import classNames from 'classnames';
-import HamburgerButton from 'components/common/HamburgerButton';
-import ThemeButton from 'components/input/ThemeButton';
-import LanguageButton from 'components/input/LanguageButton';
-import ProfileButton from 'components/input/ProfileButton';
-import TeamsButton from 'components/input/TeamsButton';
-import Icons from 'components/icons';
-import { useMessages, useNavigation, useTeamUrl } from 'components/hooks';
+import HamburgerButton from '@/components/common/HamburgerButton';
+import ThemeButton from '@/components/input/ThemeButton';
+import LanguageButton from '@/components/input/LanguageButton';
+import ProfileButton from '@/components/input/ProfileButton';
+import TeamsButton from '@/components/input/TeamsButton';
+import Icons from '@/components/icons';
+import { useMessages, useNavigation, useTeamUrl } from '@/components/hooks';
+import { getItem, setItem } from '@/lib/storage';
 import styles from './NavBar.module.css';
-import { useEffect } from 'react';
-import { getItem, setItem } from 'next-basics';
 
 export function NavBar() {
   const { formatMessage, labels } = useMessages();
@@ -86,12 +86,10 @@ export function NavBar() {
     if (!cloudMode) {
       const teamIdLocal = getItem('umami.team')?.id;
 
-      if (teamIdLocal && pathname !== '/' && pathname !== '/dashboard') {
-        const url = '/';
-        router.push(url);
-      } else if (teamIdLocal) {
-        const url = `/teams/${teamIdLocal}/dashboard`;
-        router.push(url);
+      if (teamIdLocal && teamIdLocal !== teamId) {
+        router.push(
+          pathname !== '/' && pathname !== '/dashboard' ? '/' : `/teams/${teamIdLocal}/dashboard`,
+        );
       }
     }
   }, [cloudMode]);

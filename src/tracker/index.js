@@ -1,10 +1,12 @@
 (window => {
   const {
     screen: { width, height },
-    navigator: { language },
+    navigator: { language, doNotTrack: ndnt, msDoNotTrack: msdnt },
     location,
     document,
     history,
+    top,
+    doNotTrack,
   } = window;
   const { hostname, href, origin } = location;
   const { currentScript, referrer } = document;
@@ -20,7 +22,9 @@
   const hostUrl = attr(_data + 'host-url');
   const tag = attr(_data + 'tag');
   const autoTrack = attr(_data + 'auto-track') !== _false;
+  const dnt = attr(_data + 'do-not-track') === _true;
   const excludeSearch = attr(_data + 'exclude-search') === _true;
+  const excludeHash = attr(_data + 'exclude-hash') === _true;
   const domain = attr(_data + 'domains') || '';
   const domains = domain.split(',').map(n => n.trim());
   const host =
@@ -33,45 +37,21 @@
 
   /* Helper functions */
 
-  const encode = str => {
-    if (!str) {
-      return undefined;
-    }
-
-    try {
-      const result = decodeURI(str);
-
-      if (result !== str) {
-        return result;
-      }
-    } catch (e) {
-      return str;
-    }
-
-    return encodeURI(str);
-  };
-
-  const parseURL = url => {
-    try {
-      // use location.origin as the base to handle cases where the url is a relative path
-      const { pathname, search, hash } = new URL(url, origin);
-      url = pathname + search + hash;
-    } catch (e) {
-      /* empty */
-    }
-    return excludeSearch ? url.split('?')[0] : url;
-  };
-
   const getPayload = () => ({
     website,
-    hostname,
     screen,
     language,
-    title: encode(title),
-    url: encode(currentUrl),
-    referrer: encode(currentRef),
+    title,
+    hostname,
+    url: currentUrl,
+    referrer: currentRef,
     tag: tag ? tag : undefined,
   });
+
+  const hasDoNotTrack = () => {
+    const dnt = doNotTrack || ndnt || msdnt;
+    return dnt === 1 || dnt === '1' || dnt === 'yes';
+  };
 
   /* Event handlers */
 
@@ -79,7 +59,17 @@
     if (!url) return;
 
     currentRef = currentUrl;
-    currentUrl = parseURL(url.toString());
+    currentUrl = new URL(url, location.href);
+
+    if (excludeSearch) {
+      currentUrl.search = '';
+    }
+
+    if (excludeHash) {
+      currentUrl.hash = '';
+    }
+
+    currentUrl = currentUrl.toString();
 
     if (currentUrl !== currentRef) {
       setTimeout(track, delayDuration);
@@ -176,7 +166,9 @@
                   e.preventDefault();
                 }
                 return trackElement(parentElement).then(() => {
-                  if (!external) location.href = href;
+                  if (!external) {
+                    (target === '_top' ? top.location : location).href = href;
+                  }
                 });
               }
             } else if (parentElement.tagName === 'BUTTON') {
@@ -194,9 +186,11 @@
   /* Tracking functions */
 
   const trackingDisabled = () =>
+    disabled ||
     !website ||
     (localStorage && localStorage.getItem('umami.disabled')) ||
-    (domain && !domains.includes(hostname));
+    (domain && !domains.includes(hostname)) ||
+    (dnt && hasDoNotTrack());
 
   const send = async (payload, type = 'event') => {
     if (trackingDisabled()) return;
@@ -214,10 +208,15 @@
         method: 'POST',
         body: JSON.stringify({ type, payload }),
         headers,
+        credentials: 'omit',
       });
-      const text = await res.text();
 
-      return (cache = text);
+      const data = await res.json();
+
+      if (data) {
+        disabled = !!data.disabled;
+        cache = data.cache;
+      }
     } catch (e) {
       /* empty */
     }
@@ -259,11 +258,12 @@
     };
   }
 
-  let currentUrl = parseURL(href);
+  let currentUrl = href;
   let currentRef = referrer.startsWith(origin) ? '' : referrer;
   let title = document.title;
   let cache;
   let initialized;
+  let disabled = false;
 
   if (autoTrack && !trackingDisabled()) {
     if (document.readyState === 'complete') {

@@ -1,8 +1,8 @@
-import FilterLink from 'components/common/FilterLink';
-import { emptyFilter } from 'lib/filters';
-import { useMessages, useLocale, useRegionNames } from 'components/hooks';
+import FilterLink from '@/components/common/FilterLink';
+import { emptyFilter } from '@/lib/filters';
+import { useMessages, useLocale, useRegionNames } from '@/components/hooks';
 import MetricsTable, { MetricsTableProps } from './MetricsTable';
-import TypeIcon from 'components/common/TypeIcon';
+import TypeIcon from '@/components/common/TypeIcon';
 
 export function RegionsTable(props: MetricsTableProps) {
   const { locale } = useLocale();
@@ -25,6 +25,7 @@ export function RegionsTable(props: MetricsTableProps) {
       metric={formatMessage(labels.visitors)}
       dataFilter={emptyFilter}
       renderLabel={renderLink}
+      searchFormattedValues={true}
     />
   );
 }

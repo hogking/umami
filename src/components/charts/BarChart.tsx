@@ -1,7 +1,7 @@
-import BarChartTooltip from 'components/charts/BarChartTooltip';
-import Chart, { ChartProps } from 'components/charts/Chart';
-import { useTheme } from 'components/hooks';
-import { renderNumberLabels } from 'lib/charts';
+import BarChartTooltip from '@/components/charts/BarChartTooltip';
+import Chart, { ChartProps } from '@/components/charts/Chart';
+import { useTheme } from '@/components/hooks';
+import { renderNumberLabels } from '@/lib/charts';
 import { useMemo, useState } from 'react';
 
 export interface BarChartProps extends ChartProps {
@@ -14,6 +14,7 @@ export interface BarChartProps extends ChartProps {
   YAxisType?: string;
   minDate?: number | string;
   maxDate?: number | string;
+  isAllTime?: boolean;
 }
 
 export function BarChart(props: BarChartProps) {
@@ -29,6 +30,7 @@ export function BarChart(props: BarChartProps) {
     minDate,
     maxDate,
     currency,
+    isAllTime,
   } = props;
 
   const options: any = useMemo(() => {
@@ -37,7 +39,7 @@ export function BarChart(props: BarChartProps) {
         x: {
           type: XAxisType,
           stacked: true,
-          min: minDate && new Date(minDate).getSeconds() === 0 ? minDate : '',
+          min: isAllTime ? '' : minDate,
           max: maxDate,
           time: {
             unit,
