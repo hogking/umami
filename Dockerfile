@@ -19,6 +19,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 COPY docker/middleware.ts ./src
 
+ARG DATABASE_TYPE
 ARG BASE_PATH
 ARG ALLOWED_FRAME_URLS
 
