@@ -1,10 +1,7 @@
 ARG NODE_IMAGE_VERSION="22-alpine"
 
 # Install dependencies only when needed
-FROM node:22-alpine AS deps
-# 添加镜像源配置
-COPY docker/alpine-mirrors.sh /alpine-mirrors.sh
-RUN chmod +x /alpine-mirrors.sh && /alpine-mirrors.sh
+FROM node:${NODE_IMAGE_VERSION} AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -19,18 +16,11 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 COPY docker/middleware.ts ./src
 
-ARG DATABASE_TYPE
 ARG BASE_PATH
-ARG ALLOWED_FRAME_URLS
 
-# OldZ
-ENV DATABASE_TYPE $DATABASE_TYPE
-ENV BASE_PATH $BASE_PATH
-ENV ALLOWED_FRAME_URLS $ALLOWED_FRAME_URLS
-# New
-# ENV BASE_PATH=$BASE_PATH
-# ENV NEXT_TELEMETRY_DISABLED=1
-# ENV DATABASE_URL="postgresql://user:pass@localhost:5432/dummy"
+ENV BASE_PATH=$BASE_PATH
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV DATABASE_URL="postgresql://user:pass@localhost:5432/dummy"
 
 RUN npm run build-docker
 
